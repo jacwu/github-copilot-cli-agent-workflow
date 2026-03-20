@@ -20,8 +20,8 @@ jobs:
       ISSUE_TITLE: ${{ github.event.issue.title }}
       REPO: ${{ github.repository }}
       FEATURE_BRANCH: feature/${{ github.event.issue.number }}
-      STAGE_BRANCH: feature/${{ github.event.issue.number }}/design-revise
-      STAGE_BRANCH_URL: https://github.com/${{ github.repository }}/tree/feature/${{ github.event.issue.number }}/design-revise
+      STAGE_BRANCH: feature/${{ github.event.issue.number }}-design-revise
+      STAGE_BRANCH_URL: https://github.com/${{ github.repository }}/tree/feature/${{ github.event.issue.number }}-design-revise
       STAGE: ai-design-revise
       MODEL: claude-opus-4.6
       AGENT_FILE: ai-design-revise

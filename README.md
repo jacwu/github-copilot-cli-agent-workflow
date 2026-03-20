@@ -104,7 +104,7 @@ The CLI is invoked with:
 copilot --agent <agent-file> --prompt <context> --model <model> --allow-all --no-ask-user --silent
 ```
 
-The design stage works on `feature/<issue-number>/design`, which is created from `feature/<issue-number>`. Later stages continue on `feature/<issue-number>`.
+The pipeline uses a shared base branch `feature/<issue-number>` plus stage branches derived from it: `feature/<issue-number>-design`, `feature/<issue-number>-design-revise`, `feature/<issue-number>-implement`, and `feature/<issue-number>-implement-revise`.
 
 ## Secrets
 

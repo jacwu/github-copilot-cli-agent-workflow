@@ -20,8 +20,8 @@ jobs:
       ISSUE_TITLE: ${{ github.event.issue.title }}
       REPO: ${{ github.repository }}
       FEATURE_BRANCH: feature/${{ github.event.issue.number }}
-      STAGE_BRANCH: feature/${{ github.event.issue.number }}/design
-      STAGE_BRANCH_URL: https://github.com/${{ github.repository }}/tree/feature/${{ github.event.issue.number }}/design
+      STAGE_BRANCH: feature/${{ github.event.issue.number }}-design
+      STAGE_BRANCH_URL: https://github.com/${{ github.repository }}/tree/feature/${{ github.event.issue.number }}-design
       STAGE: ai-design
       MODEL: gpt-5.4
       AGENT_FILE: ai-design
