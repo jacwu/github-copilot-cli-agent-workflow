@@ -104,7 +104,7 @@ The CLI is invoked with:
 copilot --agent <agent-file> --prompt <context> --model <model> --allow-all --no-ask-user --silent
 ```
 
-All four stages share the same `feature/<issue-number>` branch.
+The design stage works on `feature/<issue-number>/design`, which is created from `feature/<issue-number>`. Later stages continue on `feature/<issue-number>`.
 
 ## Secrets
 

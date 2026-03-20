@@ -19,7 +19,9 @@ jobs:
       ISSUE_NUMBER: ${{ github.event.issue.number }}
       ISSUE_TITLE: ${{ github.event.issue.title }}
       REPO: ${{ github.repository }}
-      BRANCH_NAME: feature/${{ github.event.issue.number }}
+      FEATURE_BRANCH: feature/${{ github.event.issue.number }}
+      STAGE_BRANCH: feature/${{ github.event.issue.number }}/design
+      STAGE_BRANCH_URL: https://github.com/${{ github.repository }}/tree/feature/${{ github.event.issue.number }}/design
       STAGE: ai-design
       MODEL: gpt-5.4
       AGENT_FILE: ai-design
@@ -42,6 +44,14 @@ jobs:
       - name: Install Copilot CLI
         run: npm install -g @github/copilot
 
+      - name: Create feature branch
+        run: |
+          python scripts/create_branch.py "$FEATURE_BRANCH" --repo "$REPO"
+
+      - name: Create design stage branch
+        run: |
+          python scripts/create_branch.py "$STAGE_BRANCH" --repo "$REPO" --source-branch "$FEATURE_BRANCH"
+
       - name: Comment issue start
         env:
           COMMENT_BODY: |
@@ -50,17 +60,15 @@ jobs:
             Copilot CLI is analyzing the issue and creating a technical design document.
 
             Model: gpt-5.4
+
+            Branch: ${STAGE_BRANCH_URL}
         run: |
           python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT_BODY" --repo "$REPO"
 
-      - name: Create feature branch
+      - name: Switch to design stage branch
         run: |
-          python scripts/create_branch.py "$BRANCH_NAME" --repo "$REPO"
-
-      - name: Switch to feature branch
-        run: |
-          git fetch origin "$BRANCH_NAME"
-          git checkout "$BRANCH_NAME"
+          git fetch origin "$STAGE_BRANCH"
+          git checkout -B "$STAGE_BRANCH" "origin/$STAGE_BRANCH"
 
       - name: Configure git identity
         run: |
@@ -137,7 +145,7 @@ jobs:
         run: |
           git add -A
           git commit -m "[Design] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
-          git push origin "$BRANCH_NAME"
+          git push origin "$STAGE_BRANCH"
 
       - name: Create PR
         run: |
@@ -149,10 +157,10 @@ jobs:
           python scripts/create_pr.py \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
-            --head "$BRANCH_NAME" \
-            --base main \
+            --head "$STAGE_BRANCH" \
+            --base "$FEATURE_BRANCH" \
             --repo "$REPO"
 
       - name: Comment issue done
         run: |
-          python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Design completed. PR created from branch \`${BRANCH_NAME}\`." --repo "$REPO"
+          python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Design completed. PR created from branch \`${STAGE_BRANCH}\` into \`${FEATURE_BRANCH}\`." --repo "$REPO"
