@@ -22,7 +22,7 @@ jobs:
       BRANCH_NAME: feature/${{ github.event.issue.number }}
       STAGE: ai-implement-revise
       MODEL: gpt-5.4
-      AGENT_FILE: .github/agents/ai-implement-revise.agent.md
+      AGENT_FILE: ai-implement-revise
       OUTPUT_FILE: implement.md
 
     steps:

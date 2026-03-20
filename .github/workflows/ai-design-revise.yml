@@ -22,7 +22,7 @@ jobs:
       BRANCH_NAME: feature/${{ github.event.issue.number }}
       STAGE: ai-design-revise
       MODEL: claude-opus-4.6
-      AGENT_FILE: .github/agents/ai-design-revise.agent.md
+      AGENT_FILE: ai-design-revise
       OUTPUT_FILE: task.md
 
     steps:
