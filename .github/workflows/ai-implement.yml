@@ -1,0 +1,147 @@
+name: ai-implement
+
+on:
+  issues:
+    types:
+      - labeled
+
+jobs:
+  ai-implement:
+    if: github.event.label.name == 'ai-implement'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.COPILOT_ACTION_TOKEN }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      ISSUE_TITLE: ${{ github.event.issue.title }}
+      REPO: ${{ github.repository }}
+      BRANCH_NAME: feature/${{ github.event.issue.number }}
+      STAGE: ai-implement
+      MODEL: claude-opus-4.6
+      AGENT_FILE: .github/agents/ai-implement.agent.md
+      OUTPUT_FILE: implement.md
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Comment issue start
+        env:
+          COMMENT_BODY: |
+            **Stage: Implementation** has started.
+
+            Copilot CLI is implementing code based on the technical design.
+
+            Model: claude-opus-4.6
+        run: |
+          python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT_BODY" --repo "$REPO"
+
+      - name: Switch to feature branch
+        run: |
+          git fetch origin "$BRANCH_NAME"
+          git checkout "$BRANCH_NAME"
+          git merge origin/main --no-edit || true
+
+      - name: Configure git identity
+        run: |
+          git config user.name "GitHub Copilot CLI"
+          git config user.email "cli@githubcopilot.com"
+
+      - name: Fetch issue context
+        run: |
+          python scripts/fetch_issue.py "$ISSUE_NUMBER" --repo "$REPO" > issue-context.txt
+
+      - name: Build prompt
+        run: |
+          STAGE_INSTRUCTION="You are in the implementation phase. The issue number is ${ISSUE_NUMBER}. Use docs/tasks/${ISSUE_NUMBER}/task.md as the execution plan to complete the implementation. If docs/tasks/${ISSUE_NUMBER}/task.md does not exist, stop — do not start implementing. After implementation, save a summary of changes, affected files, validation results, and remaining items to docs/tasks/${ISSUE_NUMBER}/implement.md."
+          ISSUE_CONTEXT=$(cat issue-context.txt)
+          PROMPT="${STAGE_INSTRUCTION}
+
+          ${ISSUE_CONTEXT}"
+          printf '%s' "$PROMPT" > copilot-prompt.txt
+
+      - name: Run Copilot CLI
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_ACTION_TOKEN }}
+        run: |
+          copilot \
+            --agent "$AGENT_FILE" \
+            --prompt "$(cat copilot-prompt.txt)" \
+            --model "$MODEL" \
+            --allow-all \
+            --no-ask-user \
+            --silent \
+            2>&1 | tee copilot-output.txt
+
+      - name: Post CLI output as comment
+        if: always()
+        run: |
+          if [ -f copilot-output.txt ] && [ -s copilot-output.txt ]; then
+            OUTPUT=$(head -c 60000 copilot-output.txt)
+            COMMENT="<details><summary>Copilot CLI Output (Implement)</summary>
+
+          \`\`\`
+          ${OUTPUT}
+          \`\`\`
+
+          </details>"
+            python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT" --repo "$REPO"
+          fi
+
+      - name: Verify output
+        run: |
+          OUTPUT_PATH="docs/tasks/${ISSUE_NUMBER}/${OUTPUT_FILE}"
+          if [ ! -f "$OUTPUT_PATH" ]; then
+            echo "Error: Expected output file $OUTPUT_PATH was not created"
+            python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Implementation failed: expected output file \`$OUTPUT_PATH\` was not created." --repo "$REPO"
+            exit 1
+          fi
+          if git diff --quiet -- "$OUTPUT_PATH" 2>/dev/null && git diff --cached --quiet -- "$OUTPUT_PATH" 2>/dev/null; then
+            if git ls-files --error-unmatch "$OUTPUT_PATH" 2>/dev/null; then
+              echo "Error: Output file $OUTPUT_PATH exists but has no changes"
+              python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Implementation failed: output file \`$OUTPUT_PATH\` was not modified." --repo "$REPO"
+              exit 1
+            fi
+          fi
+          echo "Output file verified: $OUTPUT_PATH"
+
+      - name: Commit and push
+        run: |
+          git add -A
+          git commit -m "[Implement] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create PR
+        run: |
+          PR_TITLE="[Implement] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
+          PR_BODY="Stage: ${STAGE}
+            Refs: #${ISSUE_NUMBER}
+
+          Automated PR created by GitHub Copilot CLI for the implementation stage."
+          python scripts/create_pr.py \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --head "$BRANCH_NAME" \
+            --base main \
+            --repo "$REPO"
+
+      - name: Comment issue done
+        run: |
+          python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Implementation completed. PR created from branch \`${BRANCH_NAME}\`." --repo "$REPO"
