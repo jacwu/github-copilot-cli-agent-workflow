@@ -1,24 +1,12 @@
-# Python cache and bytecode
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Python virtual environments
-.venv/
-venv/
-env/
-ENV/
-
-# Python tooling caches
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-htmlcov/
-
 # Node dependencies
 node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment files
+.env*.local
 
 # Local editor and OS files
 .vscode/
