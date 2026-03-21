@@ -28,8 +28,22 @@ export function createDatabase(
 
   const sqlite = new Database(filePath);
   sqlite.pragma("journal_mode = WAL");
+  sqlite.pragma("foreign_keys = ON");
 
   return drizzle(sqlite, { schema });
 }
 
-export const db = createDatabase(process.env.DATABASE_URL ?? "");
+let _db: BetterSQLite3Database<typeof schema> | undefined;
+
+export function getDb(): BetterSQLite3Database<typeof schema> {
+  if (!_db) {
+    _db = createDatabase(process.env.DATABASE_URL ?? "");
+  }
+  return _db;
+}
+
+export const db = new Proxy({} as BetterSQLite3Database<typeof schema>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getDb(), prop, receiver);
+  },
+});
