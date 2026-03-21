@@ -43,6 +43,9 @@ The repository already contains the persistence infrastructure introduced by Tas
 - `drizzle.config.ts` points Drizzle Kit at `./src/db/schema.ts` and outputs migrations to `./drizzle`.
 - The project is configured for the SQLite dialect with a default database URL of `file:./data/app.db`.
 - `src/db/schema.ts` currently contains a placeholder `_migrations_test` table used only to validate migration generation.
+- `src/db/index.ts` creates the database connection via `createDatabase()`, which imports `* as schema` from `./schema` and passes it to `drizzle()`. It currently enables `journal_mode = WAL` but does **not** enable `PRAGMA foreign_keys = ON`.
+- `src/db/index.test.ts` imports the placeholder `migrationsTest` table from `./schema` and includes a test case ("supports schema integration with placeholder table after migration") that inserts into and queries this table. This test will break when the placeholder is removed.
+- One existing migration (`drizzle/0000_marvelous_mulholland_black.sql`) creates only the `_migrations_test` table.
 
 What is still missing is the actual application schema.
 
@@ -53,7 +56,9 @@ As a result:
 - there is no trip ownership model,
 - there is no normalized itinerary-stop model to support ordered trip planning.
 
-Task 3 should therefore be treated as the point where the placeholder schema is retired and the real source-of-truth data model is established.
+Additionally, SQLite does **not** enforce foreign key constraints by default. Without explicitly enabling `PRAGMA foreign_keys = ON` on every connection, all foreign-key-dependent behavior defined in this task (CASCADE, RESTRICT) will be silently ignored at runtime.
+
+Task 3 should therefore be treated as the point where the placeholder schema is retired, foreign key enforcement is activated, and the real source-of-truth data model is established.
 
 ## Proposed Design
 
@@ -242,7 +247,19 @@ Where practical in Drizzle/SQLite, the implementation should encode the followin
 
 These constraints reduce invalid states that would otherwise have to be caught repeatedly in API handlers.
 
-### 5. Drizzle Schema Conventions
+### 5. Foreign Key Enforcement
+
+SQLite does not enforce foreign key constraints by default. All foreign-key-dependent behavior in this schema — `ON DELETE CASCADE` on `trips.user_id` and `trip_stops.trip_id`, `ON DELETE RESTRICT` on `trip_stops.destination_id` — requires that `PRAGMA foreign_keys = ON` is executed on every database connection before any DML statement.
+
+The implementation must add the following pragma to the `createDatabase()` function in `src/db/index.ts`, immediately after the existing `journal_mode = WAL` pragma:
+
+```
+sqlite.pragma("foreign_keys = ON");
+```
+
+Without this change, foreign key constraints will be silently unenforced at runtime, and the validation expectations in section 8 (cascade deletion, restrict deletion) will not hold.
+
+### 6. Drizzle Schema Conventions
 
 The implementation should follow these schema-authoring conventions inside `src/db/schema.ts`:
 
@@ -254,7 +271,26 @@ The implementation should follow these schema-authoring conventions inside `src/
 
 For constant-like value sets such as destination categories and trip statuses, the implementation should avoid TypeScript `enum` usage and prefer `as const` arrays/objects if shared literals are needed. That stays aligned with the repository coding standards.
 
-### 6. Migration Expectations
+#### 6.1 Drizzle API Notes (v0.45.x)
+
+The project uses `drizzle-orm` v0.45.x. The following API patterns apply:
+
+- Table extras (indexes, unique constraints, check constraints) use the **array-based third argument** syntax for `sqliteTable`:
+  ```typescript
+  export const myTable = sqliteTable("my_table", {
+    /* columns */
+  }, (table) => [
+    index("idx_name").on(table.column),
+    uniqueIndex("uq_name").on(table.col1, table.col2),
+    check("chk_name", sql`...`),
+  ]);
+  ```
+- `check` is imported from `drizzle-orm/sqlite-core`.
+- The `sql` template tag used in CHECK constraint expressions is imported from `drizzle-orm`.
+- `relations` is imported from `drizzle-orm` and defined as separate exported constants (e.g., `usersRelations`).
+- Drizzle's `text("column", { enum: [...] })` option provides **TypeScript-level** type narrowing only; it does not generate a database CHECK constraint. Both the `{ enum }` option (for type safety) and an explicit `check()` (for database enforcement) should be used together where documented CHECK constraints are required.
+
+### 7. Migration Expectations
 
 Task 3 should produce a migration that replaces the placeholder migration-test schema with the real application schema.
 
@@ -264,26 +300,46 @@ The expected migration outcome is:
 - The four application tables are created.
 - Foreign keys, uniqueness constraints, and indexes described above are reflected in the generated migration.
 
-Because SQLite has limited support for destructive schema rewrites, the implementation should rely on Drizzle Kit’s generated migration output rather than attempting to hand-edit SQL unless the generated result is clearly incorrect.
+Since no production database exists yet, the cleanest approach is to delete the existing placeholder migration (`drizzle/0000_marvelous_mulholland_black.sql` and its snapshot in `drizzle/meta/`) and run `npx drizzle-kit generate` to produce a single fresh migration containing only the four production tables. This avoids an unnecessary incremental migration that drops a table nobody depends on in production. If Drizzle Kit has issues with a fresh generation, the fallback is to keep the existing migration and generate an incremental migration on top of it.
 
-### 7. Validation Expectations
+### 8. Test Strategy
 
-When implemented, the following should be verifiable:
+Tests should follow TDD: write failing tests first, then implement the schema to make them pass.
 
-1. `src/db/schema.ts` exports the four production tables and their relations with no placeholder table remaining.
-2. Drizzle can generate a migration from the schema without errors.
-3. Applying migrations creates all four tables with the expected foreign keys and constraints.
-4. Inserting duplicate user emails fails at the database layer.
-5. Inserting a `trip_stop` with a duplicate `(trip_id, sort_order)` pair fails at the database layer.
-6. Deleting a trip removes its stops automatically.
-7. Deleting a destination that is still referenced by a trip stop fails.
-8. Destination browse queries can efficiently filter by category, region, and price level using the declared schema/indexes.
+#### 8.1 New test file: `src/db/schema.test.ts`
+
+This file should contain schema-focused integration tests that verify the database structure and constraint behavior after migrations are applied. Each test should use an isolated temporary SQLite database created via `createDatabase()` with migrations applied.
+
+Tests should cover at minimum:
+
+1. All four tables are created and accept valid inserts.
+2. `users.email` uniqueness is enforced (duplicate email insert fails).
+3. `trip_stops (trip_id, sort_order)` uniqueness is enforced (duplicate pair insert fails).
+4. `ON DELETE CASCADE` from `trips` to `trip_stops` works (deleting a trip removes its stops).
+5. `ON DELETE CASCADE` from `users` to `trips` works (deleting a user removes their trips).
+6. `ON DELETE RESTRICT` on `trip_stops.destination_id` works (deleting a referenced destination fails).
+7. CHECK constraints reject invalid values for `price_level`, `rating`, `category`, `status`, and `sort_order`.
+
+The test environment annotation `// @vitest-environment node` should be used since these tests require `better-sqlite3` (a native Node module).
+
+#### 8.2 Existing test file: `src/db/index.test.ts`
+
+The last test case ("supports schema integration with placeholder table after migration") imports `migrationsTest` from `./schema` and inserts into the `_migrations_test` table. When the placeholder table is removed, this test will fail at compile time (missing export) and at runtime (missing table).
+
+This test must be updated to use one of the new production tables instead (e.g., `users` or `destinations`). The replacement test should:
+
+- Import a production table from `./schema`.
+- Apply migrations to the temporary database.
+- Insert a valid row and verify the insert/query round-trip.
+
+The intent of the test (verifying that schema integration with migrations works end-to-end) should be preserved.
 
 ## Implementation Plan
 
-1. Replace the placeholder `_migrations_test` definition in `src/db/schema.ts` with the four real table definitions and associated Drizzle relations.
-2. Encode the required foreign keys, uniqueness constraints, and the recommended `CHECK` constraints that are practical to represent cleanly in Drizzle for SQLite.
-3. Add the supporting indexes needed for trip ownership queries and destination filtering.
-4. Generate a new Drizzle migration so the migration history reflects the transition from the placeholder schema to the real application model.
-5. Add or update schema-focused tests first, validating critical constraints such as unique emails, cascading trip-stop deletion, and duplicate stop-order rejection.
-6. Run the existing database migration and test workflows to confirm the schema is valid, consistent, and ready for Tasks 4, 6, 7, and 9.
+1. **Enable foreign key enforcement**: Add `sqlite.pragma("foreign_keys = ON")` to `createDatabase()` in `src/db/index.ts`, immediately after the existing `journal_mode = WAL` pragma.
+2. **Write schema tests first (TDD)**: Create `src/db/schema.test.ts` with the integration tests described in section 8.1. These tests should fail initially since the production tables do not exist yet.
+3. **Replace the placeholder schema**: Remove the `_migrations_test` definition from `src/db/schema.ts` and define the four production tables (`users`, `destinations`, `trips`, `tripStops`) with all columns, foreign keys, uniqueness constraints, CHECK constraints, and indexes as described in sections 2–4.
+4. **Add Drizzle relation definitions**: Export `usersRelations`, `destinationsRelations`, `tripsRelations`, and `tripStopsRelations` in the same schema file.
+5. **Update the existing test**: Modify `src/db/index.test.ts` to replace the `migrationsTest` import and placeholder-table test case with an equivalent test using one of the new production tables (see section 8.2).
+6. **Generate a fresh migration**: Delete the existing placeholder migration files and run `npx drizzle-kit generate` to produce a clean migration for the four production tables.
+7. **Run all tests and validate**: Execute `npm run test` to confirm all schema constraint tests pass and existing database connection tests remain green.
