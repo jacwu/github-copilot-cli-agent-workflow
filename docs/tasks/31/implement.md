@@ -42,3 +42,27 @@
 
 ## Open Items
 - None. All task.md requirements are fulfilled.
+
+## Revision Review — 2026-03-21
+
+### Review Outcome
+- Reviewed `src/db/schema.ts`, `src/db/index.ts`, `src/db/schema.test.ts`, `src/db/index.test.ts`, and the generated Drizzle migration/snapshot against `docs/requirements.md`, `docs/design.md`, and `docs/tasks/31/task.md`.
+- Confirmed the existing implementation already matches the task design:
+  - all four core tables are present with the documented columns,
+  - foreign keys and delete behavior are correctly configured,
+  - required indexes, uniqueness constraints, and CHECK constraints are in place,
+  - Drizzle relation exports use the expected names,
+  - `sqlite.pragma("foreign_keys = ON")` is enabled in `createDatabase()`,
+  - migration artifacts reflect the production schema rather than the placeholder table.
+
+### Code Revisions
+- No source code changes were required after review.
+- Updated this implementation summary to record the revision pass and current validation results.
+
+### Validation
+- **Lint**: `npm run lint` — passed.
+- **Tests**: `npm run test` — passed (`31` tests across `4` files).
+- **Build**: `npm run build` — passed.
+
+### Remaining Items
+- None. No additional issue-31 revisions are needed at this time.
