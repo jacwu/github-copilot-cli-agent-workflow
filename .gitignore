@@ -26,6 +26,11 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Next.js
+.next/
+out/
+next-env.d.ts
+
 # Local workflow scratch files
 copilot-output.txt
 copilot-prompt.txt
