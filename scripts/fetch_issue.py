@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Fetch a GitHub issue's title, body, and comments using the REST API.
+Fetch a GitHub issue's title and body using the REST API.
 
 Output format: structured text suitable for passing as a prompt to Copilot CLI.
-Bot comments (from users of type Bot) are excluded by default.
 """
 
 from __future__ import annotations
@@ -74,44 +73,16 @@ def fetch_issue(
     repo: str,
     issue_number: int,
     token: str,
-    include_bots: bool = False,
 ) -> dict[str, Any]:
     issue = github_get(
         f"{GITHUB_API_BASE}/repos/{owner}/{repo}/issues/{issue_number}",
         token,
     )
 
-    comments_data: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        page_comments = github_get(
-            f"{GITHUB_API_BASE}/repos/{owner}/{repo}/issues/{issue_number}/comments?per_page=100&page={page}",
-            token,
-        )
-        if not page_comments:
-            break
-        comments_data.extend(page_comments)
-        if len(page_comments) < 100:
-            break
-        page += 1
-
-    if not include_bots:
-        comments_data = [
-            c for c in comments_data
-            if c.get("user", {}).get("type", "") != "Bot"
-        ]
-
     return {
         "number": issue.get("number"),
         "title": issue.get("title", ""),
         "body": issue.get("body", "") or "",
-        "comments": [
-            {
-                "user": c.get("user", {}).get("login", "unknown"),
-                "body": c.get("body", ""),
-            }
-            for c in comments_data
-        ],
     }
 
 
@@ -123,13 +94,6 @@ def format_as_prompt(data: dict[str, Any]) -> str:
         "Issue body:",
         data["body"],
     ]
-
-    if data["comments"]:
-        lines.append("")
-        lines.append("Issue comments:")
-        for comment in data["comments"]:
-            lines.append(f"--- @{comment['user']} ---")
-            lines.append(comment["body"])
 
     return "\n".join(lines)
 
@@ -148,11 +112,6 @@ def build_parser() -> argparse.ArgumentParser:
         "-t",
         "--token",
         help="GitHub token; falls back to GITHUB_TOKEN env var if omitted",
-    )
-    parser.add_argument(
-        "--include-bots",
-        action="store_true",
-        help="Include comments from bot users (excluded by default)",
     )
     parser.add_argument(
         "--json",
@@ -187,7 +146,6 @@ def main() -> int:
             repo=repo,
             issue_number=args.number,
             token=token,
-            include_bots=args.include_bots,
         )
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)

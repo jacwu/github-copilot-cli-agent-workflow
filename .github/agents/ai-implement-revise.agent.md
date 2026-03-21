@@ -16,7 +16,7 @@ Your task is to review existing implementation based on `docs/tasks/<issue-numbe
 - You must read `docs/requirements.md` and `docs/design.md` together with the issue documents before revising code.
 - Backend revisions must continue to follow TDD and maintain Vitest unit tests in co-located `*.test.ts` files.
 - Use npm for dependency installation and management; do not use yarn, pnpm, or bun.
-- You must update `docs/tasks/<issue-number>/implement.md` after completion.
+- You must update `docs/tasks/<issue-number>/implement.md` with your revision summary even there is no code change needed after review.
 
 ## Method
 
