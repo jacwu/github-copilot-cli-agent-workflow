@@ -117,29 +117,10 @@ jobs:
             python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT" --repo "$REPO"
           fi
 
-      - name: Verify output
-        id: verify
-        run: |
-          OUTPUT_PATH="docs/tasks/${ISSUE_NUMBER}/${OUTPUT_FILE}"
-          if [ ! -f "$OUTPUT_PATH" ]; then
-            echo "Error: Expected output file $OUTPUT_PATH was not created"
-            python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Design failed: expected output file \`$OUTPUT_PATH\` was not created." --repo "$REPO"
-            exit 1
-          fi
-          if git diff --quiet -- "$OUTPUT_PATH" 2>/dev/null && git diff --cached --quiet -- "$OUTPUT_PATH" 2>/dev/null; then
-            # File exists but is not new and has no changes
-            if git ls-files --error-unmatch "$OUTPUT_PATH" 2>/dev/null; then
-              echo "Error: Output file $OUTPUT_PATH exists but has no changes"
-              python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Design failed: output file \`$OUTPUT_PATH\` was not modified." --repo "$REPO"
-              exit 1
-            fi
-          fi
-          echo "Output file verified: $OUTPUT_PATH"
-
       - name: Commit and push
         run: |
           git add -A
-          git commit -m "[Design] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
+          git diff --cached --quiet && echo "Nothing to commit, Copilot CLI already committed." || git commit -m "[Design] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
           git push origin "$STAGE_BRANCH"
 
       - name: Create PR

@@ -110,7 +110,7 @@ jobs:
       - name: Commit and push
         run: |
           git add -A
-          git commit -m "[Implement] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
+          git diff --cached --quiet && echo "Nothing to commit, Copilot CLI already committed." || git commit -m "[Implement] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
           git push origin "$STAGE_BRANCH"
 
       - name: Create PR

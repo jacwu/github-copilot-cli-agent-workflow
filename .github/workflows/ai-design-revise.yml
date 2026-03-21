@@ -107,25 +107,10 @@ jobs:
             python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT" --repo "$REPO"
           fi
 
-      - name: Verify output
-        run: |
-          OUTPUT_PATH="docs/tasks/${ISSUE_NUMBER}/${OUTPUT_FILE}"
-          if [ ! -f "$OUTPUT_PATH" ]; then
-            echo "Error: Expected output file $OUTPUT_PATH does not exist"
-            python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Design Revise failed: output file \`$OUTPUT_PATH\` does not exist." --repo "$REPO"
-            exit 1
-          fi
-          if git diff --quiet -- "$OUTPUT_PATH"; then
-            echo "Error: Output file $OUTPUT_PATH has no changes"
-            python scripts/comment_on_issue.py "$ISSUE_NUMBER" "Stage Design Revise failed: output file \`$OUTPUT_PATH\` was not modified." --repo "$REPO"
-            exit 1
-          fi
-          echo "Output file verified: $OUTPUT_PATH"
-
       - name: Commit and push
         run: |
           git add -A
-          git commit -m "[Design Revise] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
+          git diff --cached --quiet && echo "Nothing to commit, Copilot CLI already committed." || git commit -m "[Design Revise] #${ISSUE_NUMBER}: ${ISSUE_TITLE}"
           git push origin "$STAGE_BRANCH"
 
       - name: Create PR
