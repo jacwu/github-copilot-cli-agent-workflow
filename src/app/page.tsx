@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
@@ -15,12 +17,10 @@ export default function Home() {
             </p>
 
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <div className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-8 text-base font-medium text-primary-foreground shadow-card transition-shadow hover:shadow-card-hover">
-                Explore Destinations
-              </div>
-              <div className="inline-flex h-12 items-center justify-center rounded-2xl border border-border bg-secondary px-8 text-base font-medium text-secondary-foreground transition-shadow hover:shadow-card">
+              <Button size="lg">Explore Destinations</Button>
+              <Button size="lg" variant="secondary">
                 Plan a Trip
-              </div>
+              </Button>
             </div>
           </div>
 
