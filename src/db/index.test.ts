@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -24,12 +24,19 @@ function cleanup(dir: string): void {
 
 describe("createDatabase", () => {
   const tempDirs: string[] = [];
+  const originalDatabaseUrl = process.env.DATABASE_URL;
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.DATABASE_URL = originalDatabaseUrl;
+  });
 
   afterEach(() => {
     for (const dir of tempDirs) {
       cleanup(dir);
     }
     tempDirs.length = 0;
+    process.env.DATABASE_URL = originalDatabaseUrl;
   });
 
   it("throws when URL is empty", () => {
@@ -46,6 +53,16 @@ describe("createDatabase", () => {
 
     const db = createDatabase(url);
     const result = db.get(sql`SELECT 1 as value`);
+    expect(result).toEqual({ value: 1 });
+  });
+
+  it("trims surrounding whitespace before resolving the database path", () => {
+    const { url, dir } = makeTempDbUrl();
+    tempDirs.push(dir);
+
+    const db = createDatabase(`  ${url}  `);
+    const result = db.get(sql`SELECT 1 as value`);
+
     expect(result).toEqual({ value: 1 });
   });
 
@@ -83,5 +100,16 @@ describe("createDatabase", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].name).toBe("test-entry");
     expect(rows[0].id).toBe(1);
+  });
+
+  it("exports a shared db instance configured from DATABASE_URL", async () => {
+    const { url, dir } = makeTempDbUrl();
+    tempDirs.push(dir);
+    process.env.DATABASE_URL = url;
+
+    const { db } = await import("./index");
+    const result = db.get(sql`SELECT 1 as value`);
+
+    expect(result).toEqual({ value: 1 });
   });
 });

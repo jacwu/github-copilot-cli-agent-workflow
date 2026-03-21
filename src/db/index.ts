@@ -7,7 +7,9 @@ import { drizzle, BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 
 function normalizeDatabaseUrl(url: string): string {
-  return url.startsWith("file:") ? url.slice(5) : url;
+  const trimmedUrl = url.trim();
+
+  return trimmedUrl.startsWith("file:") ? trimmedUrl.slice(5) : trimmedUrl;
 }
 
 export function createDatabase(

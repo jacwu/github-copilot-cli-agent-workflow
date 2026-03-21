@@ -62,3 +62,29 @@
 
 ## Open Items
 - None. The placeholder `_migrations_test` table in `schema.ts` will be replaced by real application tables in Task 3.
+
+## Revision Summary (2026-03-21)
+
+### Review outcome
+- The original implementation already satisfied the main task requirements for SQLite, Drizzle, migrations, and native addon bundling.
+- The review identified two incremental improvements worth making:
+  - harden database URL normalization to tolerate accidental surrounding whitespace in `DATABASE_URL`,
+  - add explicit test coverage for the shared `db` singleton export so the public database module API is better exercised.
+
+### Targeted revisions made
+| File | Revision |
+|---|---|
+| `src/db/index.ts` | Updated database URL normalization to trim surrounding whitespace before stripping the `file:` prefix and opening the SQLite file. |
+| `src/db/index.test.ts` | Added a regression test for whitespace-wrapped SQLite URLs and a test that dynamically imports and validates the shared `db` export using `DATABASE_URL`. |
+
+### Revision validation
+| Check | Result |
+|---|---|
+| `npm install` | ✅ Dependencies installed in the local environment |
+| `npm run lint` | ✅ Passed |
+| `npm run test` | ✅ Passed, 15 tests across 3 files |
+| `npm run db:migrate` | ✅ Passed |
+| `npm run build` | ✅ Passed |
+
+### Remaining items
+- None for this task revision. Future tasks will replace the placeholder migration test table with real application tables.
