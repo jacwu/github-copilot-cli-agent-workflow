@@ -49,16 +49,17 @@ jobs:
           python scripts/create_branch.py "$STAGE_BRANCH" --repo "$REPO" --source-branch "$FEATURE_BRANCH"
 
       - name: Comment issue start
-        env:
-          COMMENT_BODY: |
-            **Stage: Implementation** has started.
-
-            Copilot CLI is implementing code based on the technical design.
-
-            Model: claude-opus-4.6
-            
-            Branch: ${STAGE_BRANCH_URL}
         run: |
+          COMMENT_BODY=$(cat <<EOF
+          **Stage: Implementation** has started.
+
+          Copilot CLI is implementing code based on the technical design.
+
+          Model: claude-opus-4.6
+
+          Branch: ${STAGE_BRANCH_URL}
+          EOF
+          )
           python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT_BODY" --repo "$REPO"
 
       - name: Switch to implementation stage branch
@@ -102,13 +103,7 @@ jobs:
         run: |
           if [ -f copilot-output.txt ] && [ -s copilot-output.txt ]; then
             OUTPUT=$(head -c 60000 copilot-output.txt)
-            COMMENT="<details><summary>Copilot CLI Output (Implement)</summary>
-
-          \`\`\`
-          ${OUTPUT}
-          \`\`\`
-
-          </details>"
+            COMMENT="${OUTPUT}"
             python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT" --repo "$REPO"
           fi
 

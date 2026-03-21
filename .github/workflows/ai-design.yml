@@ -53,16 +53,17 @@ jobs:
           python scripts/create_branch.py "$STAGE_BRANCH" --repo "$REPO" --source-branch "$FEATURE_BRANCH"
 
       - name: Comment issue start
-        env:
-          COMMENT_BODY: |
-            **Stage: Design** has started.
-
-            Copilot CLI is analyzing the issue and creating a technical design document.
-
-            Model: gpt-5.4
-
-            Branch: ${STAGE_BRANCH_URL}
         run: |
+          COMMENT_BODY=$(cat <<EOF
+          **Stage: Design** has started.
+
+          Copilot CLI is analyzing the issue and creating a technical design document.
+
+          Model: gpt-5.4
+
+          Branch: ${STAGE_BRANCH_URL}
+          EOF
+          )
           python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT_BODY" --repo "$REPO"
 
       - name: Switch to design stage branch
@@ -112,13 +113,7 @@ jobs:
           if [ -f copilot-output.txt ] && [ -s copilot-output.txt ]; then
             # Truncate to 60000 chars to stay within GitHub comment limits
             OUTPUT=$(head -c 60000 copilot-output.txt)
-            COMMENT="<details><summary>Copilot CLI Output (Design)</summary>
-
-          \`\`\`
-          ${OUTPUT}
-          \`\`\`
-
-          </details>"
+            COMMENT="${OUTPUT}"
             python scripts/comment_on_issue.py "$ISSUE_NUMBER" "$COMMENT" --repo "$REPO"
           fi
 
