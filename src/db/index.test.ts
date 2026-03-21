@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 import { createDatabase } from "./index";
-import { migrationsTest } from "./schema";
+import { users } from "./schema";
 
 function makeTempDbUrl(): { url: string; dir: string } {
   const dir = join(tmpdir(), `db-test-${randomUUID()}`);
@@ -87,18 +87,20 @@ describe("createDatabase", () => {
     expect(existsSync(nested)).toBe(true);
   });
 
-  it("supports schema integration with placeholder table after migration", () => {
+  it("supports schema integration with users table after migration", () => {
     const { url, dir } = makeTempDbUrl();
     tempDirs.push(dir);
 
     const db = createDatabase(url);
     migrate(db, { migrationsFolder: "./drizzle" });
 
-    db.insert(migrationsTest).values({ name: "test-entry" }).run();
+    db.insert(users)
+      .values({ email: "test@example.com", passwordHash: "hash", name: "Test" })
+      .run();
 
-    const rows = db.select().from(migrationsTest).all();
+    const rows = db.select().from(users).all();
     expect(rows).toHaveLength(1);
-    expect(rows[0].name).toBe("test-entry");
+    expect(rows[0].email).toBe("test@example.com");
     expect(rows[0].id).toBe(1);
   });
 
