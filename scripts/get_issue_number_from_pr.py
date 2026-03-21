@@ -6,8 +6,9 @@ Default behavior:
 1. Auto-resolve owner/repo from the git remote origin URL
 2. Read token from CLI argument or GITHUB_TOKEN environment variable
 3. Parse PR body for Issue: #N or Refs: #N patterns first
-4. Fall back to closingIssuesReferences from GraphQL
-5. Fall back to parsing Fixes/Closes/Resolves keywords from the PR body
+4. Fall back to parsing the PR title and branch names for #N patterns
+5. Fall back to closingIssuesReferences from GraphQL
+6. Fall back to parsing Fixes/Closes/Resolves keywords from the PR body
 """
 
 from __future__ import annotations
@@ -85,12 +86,49 @@ def graphql_request(query: str, variables: dict[str, Any], token: str) -> dict[s
 
 def parse_explicit_issue_reference(body: str) -> list[int]:
     """Parse Issue: #N or Refs: #N patterns from PR body (highest priority)."""
-    pattern = re.compile(r"(?i)^(?:Issue|Refs)\s*:\s*#(\d+)", re.MULTILINE)
+    pattern = re.compile(r"(?im)^\s*(?:Issue|Refs)\s*:\s*#(\d+)")
     issue_numbers: list[int] = []
     for match in pattern.finditer(body):
         num = int(match.group(1))
         if num not in issue_numbers:
             issue_numbers.append(num)
+    return issue_numbers
+
+
+def parse_issue_numbers_from_title(title: str) -> list[int]:
+    pattern = re.compile(r"#(\d+)")
+    issue_numbers: list[int] = []
+    for match in pattern.finditer(title):
+        issue_number = int(match.group(1))
+        if issue_number not in issue_numbers:
+            issue_numbers.append(issue_number)
+    return issue_numbers
+
+
+def parse_issue_numbers_from_branch_names(*branch_names: str) -> list[int]:
+    pattern = re.compile(r"(?:^|/|-)feature/(\d+)(?:$|/|-)|(?:^|/|-)(\d+)(?:$|/|-)")
+    issue_numbers: list[int] = []
+
+    for branch_name in branch_names:
+        if not branch_name:
+            continue
+
+        if branch_name.startswith("feature/"):
+            feature_match = re.match(r"feature/(\d+)(?:$|-)", branch_name)
+            if feature_match:
+                issue_number = int(feature_match.group(1))
+                if issue_number not in issue_numbers:
+                    issue_numbers.append(issue_number)
+                continue
+
+        for match in pattern.finditer(branch_name):
+            candidate = match.group(1) or match.group(2)
+            if not candidate:
+                continue
+            issue_number = int(candidate)
+            if issue_number not in issue_numbers:
+                issue_numbers.append(issue_number)
+
     return issue_numbers
 
 
@@ -134,6 +172,8 @@ def get_issue_numbers_from_pr(
           number
           title
           body
+                    headRefName
+                    baseRefName
           closingIssuesReferences(first: 20) {
             nodes {
               number
@@ -161,13 +201,26 @@ def get_issue_numbers_from_pr(
         raise ValueError(f"PR #{pr_number} not found in repository {owner}/{repo}")
 
     body = pr_data.get("body", "") or ""
+    title = pr_data.get("title", "") or ""
+    head_ref_name = pr_data.get("headRefName", "") or ""
+    base_ref_name = pr_data.get("baseRefName", "") or ""
 
     # Priority 1: Explicit Issue: #N or Refs: #N in PR body
     explicit_numbers = parse_explicit_issue_reference(body)
     if explicit_numbers:
         return explicit_numbers, "explicit-reference", pr_data
 
-    # Priority 2: closingIssuesReferences from GraphQL
+    # Priority 2: Issue number in PR title
+    title_issue_numbers = parse_issue_numbers_from_title(title)
+    if title_issue_numbers:
+        return title_issue_numbers, "title", pr_data
+
+    # Priority 3: Issue number inferred from head/base branch names
+    branch_issue_numbers = parse_issue_numbers_from_branch_names(head_ref_name, base_ref_name)
+    if branch_issue_numbers:
+        return branch_issue_numbers, "branch", pr_data
+
+    # Priority 4: closingIssuesReferences from GraphQL
     issue_numbers: list[int] = []
     for node in pr_data.get("closingIssuesReferences", {}).get("nodes", []):
         node_repo = node.get("repository", {})
@@ -181,7 +234,7 @@ def get_issue_numbers_from_pr(
     if issue_numbers:
         return issue_numbers, "closingIssuesReferences", pr_data
 
-    # Priority 3: Fixes/Closes/Resolves keywords in PR body
+    # Priority 5: Fixes/Closes/Resolves keywords in PR body
     body_issue_numbers = parse_issue_numbers_from_body(body, owner, repo)
     if body_issue_numbers:
         return body_issue_numbers, "body", pr_data
