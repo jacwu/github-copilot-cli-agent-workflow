@@ -20,6 +20,11 @@ htmlcov/
 # Node dependencies
 node_modules/
 
+# Next.js
+.next/
+out/
+next-env.d.ts
+
 # Local editor and OS files
 .vscode/
 .idea/
