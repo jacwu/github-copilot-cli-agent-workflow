@@ -48,3 +48,10 @@ next-env.d.ts
 
 # Vercel
 .vercel
+
+# SQLite database files
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
