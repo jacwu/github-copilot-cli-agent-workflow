@@ -2,25 +2,34 @@
 
 
 
-Now let me check the current codebase state to understand what exists in `travel-website/`.
+Now let me restore the original AGENTS.md, examine the scaffold, and set up shadcn/ui:
 
-Let me also check the existing AGENTS.md for any project conventions:
+Good scaffold. Now let me set up everything — fix package name, install deps, configure shadcn/ui, theme, and Vitest:
 
-Now I have a thorough understanding of the design docs, current codebase, and the existing task.md. Let me write the revised document.
+Now let me create all the configuration and source files in parallel:
 
-Let me verify the saved file is correct:
+The directories exist now. Let me create the files:
+
+Now let me update the globals.css, layout.tsx, page.tsx, and package.json:
+
+Now add the `"test"` script to package.json and clean up unneeded scaffolding files:
+
+Now let me run the tests, build, and lint to verify everything works:
+
+All 7 tests pass. Now let's run build and lint in parallel:
+
+All three validations pass. Let me verify the final file structure:
+
+All expected files are in place. Now let me create the implementation summary:
+
+Now let me commit everything:
+
+Implementation complete.
 
 - **Issue number:** 37
-- **Saved file:** `docs/tasks/37/task.md`
-- **Revisions:**
-  1. **Added Vitest testing infrastructure** (new Section 7) — `docs/design.md` Section 8 mandates Vitest, so the scaffold must include it for TDD from Task 2 onward
-  2. **Added concrete Ocean Teal color values** — reference HSL/hex (`hsl(174, 62%, 47%)` / `#2DB5A0`) with WCAG AA contrast guidance
-  3. **Added sandy beige acknowledgment** — aligned surface strategy with `docs/design.md`'s "Sandy beige and light gray-white" palette
-  4. **Added full shadcn/ui CSS variable token table** — 16 semantic tokens with purpose and value direction for implementer clarity
-  5. **Specified `@/` path alias** — explicit `src/` mapping in both `tsconfig.json` and `vitest.config.ts`
-  6. **Specified `cn()` utility stack** — `clsx` + `tailwind-merge` as dependencies
-  7. **Added Geist font section** (new Section 5) — per `docs/design.md`'s "Inter/Geist" recommendation
-  8. **Added glassmorphism preparation note** — ensures backdrop-blur utilities remain available for later tasks
-  9. **Expanded expected file table** — now includes `vitest.config.ts`, `utils.test.ts`, `components.json`, and ESLint config
-  10. **Refined implementation plan** — 7 steps (was 6), each with bold action verb and specific deliverables
+- **Task file:** `docs/tasks/37/task.md`
+- **Implementation file:** `docs/tasks/37/implement.md`
+- **Changes:** Scaffolded Next.js 15 + TypeScript + Tailwind CSS v4 app under `travel-website/`; integrated shadcn/ui with `components.json` and `cn()` utility; defined full Light & Airy Vacation Style theme tokens (Ocean Teal primary, light surfaces, `--radius: 1rem`, soft shadows); configured Geist font; created starter shell demonstrating tokens; set up Vitest with 7 smoke tests.
+- **Validation:** `npm run test` ✅ (7/7), `npm run build` ✅, `npm run lint` ✅
+- **Open items:** None
 
