@@ -1,0 +1,12 @@
+I’ve got the repo-level requirements and architecture; next I’m checking for existing task-doc patterns so the issue design matches the project’s conventions before I write `docs/tasks/37/task.md`.
+
+I found there aren’t any prior issue task docs yet, so I’m basing this one directly on the product docs and the current repository layout. I’m doing one last read-only pass over `travel-website/` to ground the “Current State” section, then I’ll save the task doc.
+
+I’ve confirmed the app scaffold is effectively uninitialized, so the design can explicitly cover first-time setup and the global styling contract future tasks will build on. I’m saving the issue design doc now.
+
+Issue number: `37`
+
+Saved file: `docs/tasks/37/task.md`
+
+Summary: I created the issue-level technical design for initializing the `travel-website/` Next.js scaffold and establishing the global Light & Airy Vacation Style system, including Tailwind, shadcn/ui readiness, Ocean Teal primary theming, large radii, and soft-elevation styling conventions.
+
