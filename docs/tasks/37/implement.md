@@ -1,103 +1,90 @@
-# Task 37 — Implementation Summary
+# Task 37 — Implementation Revision Summary
 
 ## Issue
 
 **#37 — Task 1: Initialize Project Scaffold and Global UI Style Configuration**
 
-## Changes Made
+## Review Conclusion
 
-### 1. Application Bootstrap (`travel-website/`)
+The existing scaffold largely matched the Task 37 design intent: the project already had a working Next.js App Router setup, Tailwind CSS v4, shadcn/ui-compatible theme tokens, the `cn()` utility, and a Vitest smoke test.
 
-- Scaffolded a **Next.js 16.2.1** (App Router) project with TypeScript strict mode, Tailwind CSS v4, and ESLint.
-- Package manager: **npm** (`package.json`, `package-lock.json`).
-- `@/` path alias maps to `src/` in `tsconfig.json`.
-- Config files: `next.config.ts`, `postcss.config.mjs`, `eslint.config.mjs`.
+The revision focused on targeted gaps found during review:
 
-### 2. shadcn/ui Integration
+- The app was on **Next.js 16**, while `docs/design.md` and `docs/tasks/37/task.md` specify **Next.js 15**.
+- The starter page used raw internal `<a>` links instead of Next.js `<Link>`.
+- The starter page linked to `/destinations` and `/about`, but those placeholder routes were not present yet.
+- The previous implementation summary claimed validation had already passed, but the review re-ran validation from the current workspace to confirm the real state.
 
-- Created `components.json` with "default" style, RSC enabled, `@/` aliases, and `src/components/ui` output path.
-- Installed `clsx`, `tailwind-merge`, and `class-variance-authority`.
-- Created `src/lib/utils.ts` with the `cn()` class-merging utility.
-- Created empty `src/components/ui/` directory — ready for `npx shadcn@latest add <component>`.
+## Revisions Made
 
-### 3. Global Theme Tokens (`src/app/globals.css`)
+### 1. Aligned the scaffold with the documented framework version
 
-Implemented the **Light & Airy Vacation Style** via CSS custom properties:
+- Updated `travel-website/package.json` and `travel-website/package-lock.json` to use:
+  - `next@^15.5.14`
+  - `eslint-config-next@^15.5.14`
+- Kept the rest of the scaffold intact so this remained an incremental revision rather than a refactor.
+- After the version alignment, Next.js updated `travel-website/tsconfig.json` during build to its required `jsx: "preserve"` setting, while keeping strict mode and the `@/` alias intact.
 
-| Token | Value |
-|---|---|
-| `--primary` | `hsl(174 62% 42%)` — Ocean Teal (WCAG AA on white) |
-| `--primary-foreground` | `hsl(0 0% 100%)` — White |
-| `--background` | `hsl(0 0% 100%)` — White |
-| `--foreground` | `hsl(222 47% 11%)` — Dark slate |
-| `--muted` | `hsl(40 18% 94%)` — Sandy beige |
-| `--secondary` | `hsl(40 20% 96%)` — Light warm neutral |
-| `--accent` | `hsl(174 40% 93%)` — Very light teal tint |
-| `--ring` | `hsl(174 62% 42%)` — Ocean Teal |
-| `--radius` | `1rem` — Generous base radius |
+### 2. Fixed starter-page navigation to follow Next.js conventions
 
-Full shadcn/ui semantic token set defined (card, popover, destructive, border, input, etc.). Tailwind `@theme inline` block maps all tokens to utility-class-consumable colors and radius scales.
+- Updated `travel-website/src/app/page.tsx` to replace internal `<a>` tags with `<Link>`.
+- Added `focus-visible` ring styling using the configured semantic theme tokens so the starter shell better demonstrates the accessibility expectations in the task design.
+- Added a short note on the home page clarifying that the placeholder routes are now part of the scaffold.
 
-### 4. Font Configuration
+### 3. Added minimal placeholder routes promised by the starter shell
 
-- **Geist** sans-serif and **Geist Mono** loaded via `next/font/google`.
-- Applied as CSS variables (`--font-geist-sans`, `--font-geist-mono`) on `<html>`.
-- Referenced in global stylesheet as the base `font-family`.
+- Added `travel-website/src/app/destinations/page.tsx`
+- Added `travel-website/src/app/about/page.tsx`
 
-### 5. Starter Shell
+These routes intentionally stay lightweight, but they now give the scaffold:
 
-- `src/app/layout.tsx` — root layout with metadata ("TravelExplorer"), Geist fonts, `antialiased`, full-height body.
-- `src/app/page.tsx` — minimal starter page demonstrating:
-  - Light background via `--background` token
-  - Card surface with `rounded-3xl` and `shadow-md`
-  - Primary-colored text and button using `--primary`
-  - Secondary button with `--secondary` + `--border`
-  - `cn()` utility usage for conditional class merging
-  - Hover shadow elevation (`hover:shadow-xl`)
+- real App Router entry points for the linked pages,
+- consistent use of the Light & Airy theme tokens,
+- large-radius, soft-shadow example surfaces beyond the root page,
+- working internal navigation instead of dead-end links.
 
-### 6. Testing Infrastructure
+### 4. Made the ESLint configuration compatible with Next.js 15
 
-- Installed `vitest` and `@vitejs/plugin-react` as dev dependencies.
-- Created `vitest.config.ts` with `@/` path alias resolution matching `tsconfig.json`.
-- Added `"test": "vitest run"` script to `package.json`.
-- Created `src/lib/utils.test.ts` with 7 smoke tests covering:
-  - Basic class merging
-  - Conditional classes (clsx behavior)
-  - Tailwind conflict resolution
-  - Null/undefined handling
-  - Empty invocation
-  - Array inputs
-  - Complex Tailwind conflicts (radii, colors)
+- Reworked `travel-website/eslint.config.mjs` to use `FlatCompat` with:
+  - `next/core-web-vitals`
+  - `next/typescript`
+- This preserves the intended default Next.js linting baseline while remaining compatible with the Next.js 15 package exports.
+
+### 5. Added tracked scaffold directories expected by the task
+
+- Added `travel-website/src/components/ui/.gitkeep`
+- Added `travel-website/public/images/destinations/.gitkeep`
+
+This ensures the repository now includes the starter directories referenced by the task/design scaffolding expectations.
 
 ## Affected Files
 
-| File | Action |
-|---|---|
-| `travel-website/package.json` | Created (renamed from scaffold) |
-| `travel-website/package-lock.json` | Created |
-| `travel-website/tsconfig.json` | Created |
-| `travel-website/next.config.ts` | Created |
-| `travel-website/postcss.config.mjs` | Created |
-| `travel-website/eslint.config.mjs` | Created |
-| `travel-website/components.json` | Created |
-| `travel-website/vitest.config.ts` | Created |
-| `travel-website/src/app/globals.css` | Created (full theme tokens) |
-| `travel-website/src/app/layout.tsx` | Created |
-| `travel-website/src/app/page.tsx` | Created |
-| `travel-website/src/lib/utils.ts` | Created |
-| `travel-website/src/lib/utils.test.ts` | Created |
-| `travel-website/src/components/ui/` | Created (empty directory) |
-| `travel-website/public/images/destinations/` | Created (empty directory) |
-| `travel-website/AGENTS.md` | Preserved (original content) |
+- `travel-website/package.json`
+- `travel-website/package-lock.json`
+- `travel-website/tsconfig.json`
+- `travel-website/eslint.config.mjs`
+- `travel-website/src/app/page.tsx`
+- `travel-website/src/app/destinations/page.tsx`
+- `travel-website/src/app/about/page.tsx`
+- `travel-website/src/components/ui/.gitkeep`
+- `travel-website/public/images/destinations/.gitkeep`
 
 ## Validation Results
 
+Re-run during this revision:
+
 | Check | Result |
 |---|---|
-| `npm run test` | ✅ 7/7 tests passed (242ms) |
-| `npm run build` | ✅ Compiled successfully, static pages generated |
-| `npm run lint` | ✅ No errors |
+| `cd travel-website && npm run test` | ✅ Passed (`src/lib/utils.test.ts`, 7 tests) |
+| `cd travel-website && npm run lint` | ✅ Passed |
+| `cd travel-website && npm run build` | ✅ Passed on Next.js 15.5.14 |
+
+Build output now confirms the scaffolded routes:
+
+- `/`
+- `/about`
+- `/destinations`
 
 ## Open Items
 
-- None. The scaffold is complete and ready for subsequent tasks to build features on top of it.
+- None for Task 37. The scaffold now more closely matches the documented design intent and validates cleanly.

@@ -1,4 +1,4 @@
-You are in the implementation phase. The issue number is 37. Use docs/tasks/37/task.md as the execution plan to complete the implementation. If docs/tasks/37/task.md does not exist, stop — do not start implementing. After implementation, save a summary of changes, affected files, validation results, and remaining items to docs/tasks/37/implement.md.
+You are in the implementation revision phase. The issue number is 37. Review the existing implementation based on docs/tasks/37/task.md and make targeted code revisions. After completion, save the revision summary to docs/tasks/37/implement.md. Do not rewrite task.md.
 
 Issue number: 37
 Issue title: Task 1: Initialize Project Scaffold and Global UI Style Configuration

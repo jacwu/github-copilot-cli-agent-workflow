@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -19,28 +21,39 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col gap-4 sm:flex-row">
-          <a
+          <Link
             href="/destinations"
             className={cn(
               "inline-flex h-12 items-center justify-center rounded-2xl px-8",
               "bg-primary text-primary-foreground font-medium",
-              "shadow-sm transition-shadow hover:shadow-xl"
+              "shadow-sm transition-shadow hover:shadow-xl",
+              "focus-visible:outline-none focus-visible:ring-2",
+              "focus-visible:ring-ring focus-visible:ring-offset-2",
+              "focus-visible:ring-offset-background"
             )}
           >
             Explore Destinations
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/about"
             className={cn(
               "inline-flex h-12 items-center justify-center rounded-2xl px-8",
               "bg-secondary text-secondary-foreground font-medium",
-              "border border-border shadow-sm transition-shadow hover:shadow-md"
+              "border border-border shadow-sm transition-shadow hover:shadow-md",
+              "focus-visible:outline-none focus-visible:ring-2",
+              "focus-visible:ring-ring focus-visible:ring-offset-2",
+              "focus-visible:ring-offset-background"
             )}
           >
             About Us
-          </a>
+          </Link>
         </div>
+
+        <p className="text-sm text-muted-foreground">
+          The initial scaffold now includes placeholder routes for destination
+          discovery and the about page, ready for later tasks to expand.
+        </p>
       </main>
     </div>
   );
