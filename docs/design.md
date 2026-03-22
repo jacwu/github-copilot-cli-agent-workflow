@@ -36,49 +36,63 @@ Given the travel-oriented nature of the platform, the overall UI adopts a **"Lig
 
 ## 3. Project Structure
 
+The repository root keeps workflow documents and automation scripts, while all application source code, configuration, and static assets are generated under the `travel-website/` directory.
+
 ```
-travel-website/
-├── public/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── (auth)/
-│   │   │   ├── login/page.tsx
-│   │   │   └── register/page.tsx
-│   │   ├── destinations/
-│   │   │   ├── page.tsx        # Destination list
-│   │   │   └── [id]/page.tsx   # Destination detail
-│   │   ├── trips/
-│   │   │   ├── page.tsx        # Trip list
-│   │   │   └── [id]/page.tsx   # Trip detail/edit
-│   │   ├── about/page.tsx      # About page
-│   │   ├── api/                # API Routes
-│   │   │   ├── auth/register/route.ts
-│   │   │   ├── auth/[...nextauth]/route.ts
-│   │   │   ├── destinations/route.ts
-│   │   │   ├── destinations/[id]/route.ts
-│   │   │   ├── trips/route.ts
-│   │   │   ├── trips/[id]/route.ts
-│   │   │   └── trips/[id]/stops/route.ts
-│   │   ├── layout.tsx
-│   │   └── page.tsx            # Root path, redirects to /destinations
-│   ├── components/
-│   │   ├── ui/                 # shadcn/ui components
-│   │   ├── DestinationCard.tsx
-│   │   ├── SearchBar.tsx
-│   │   ├── TripEditor.tsx
-│   │   └── Navbar.tsx
-│   ├── db/
-│   │   ├── index.ts            # Database connection
-│   │   ├── schema.ts           # Drizzle schema definitions
-│   │   └── seed.ts             # Seed data
-│   ├── lib/
-│   │   ├── auth.ts             # NextAuth configuration
-│   │   └── utils.ts
-│   └── types/
-│       └── index.ts            # Global type definitions
-├── drizzle.config.ts
-├── package.json
-└── tsconfig.json
+root/
+├── AGENTS.md
+├── README.md
+├── docs/
+│   ├── requirements.md
+│   ├── design.md
+│   ├── tasks.md
+│   └── tasks/
+├── scripts/
+└── travel-website/
+  ├── AGENTS.md
+  ├── public/
+  │   └── images/
+  │       └── destinations/
+  ├── src/
+  │   ├── app/                    # Next.js App Router
+  │   │   ├── (auth)/
+  │   │   │   ├── login/page.tsx
+  │   │   │   └── register/page.tsx
+  │   │   ├── destinations/
+  │   │   │   ├── page.tsx        # Destination list
+  │   │   │   └── [id]/page.tsx   # Destination detail
+  │   │   ├── trips/
+  │   │   │   ├── page.tsx        # Trip list
+  │   │   │   └── [id]/page.tsx   # Trip detail/edit
+  │   │   ├── about/page.tsx      # About page
+  │   │   ├── api/                # API Routes
+  │   │   │   ├── auth/register/route.ts
+  │   │   │   ├── auth/[...nextauth]/route.ts
+  │   │   │   ├── destinations/route.ts
+  │   │   │   ├── destinations/[id]/route.ts
+  │   │   │   ├── trips/route.ts
+  │   │   │   ├── trips/[id]/route.ts
+  │   │   │   └── trips/[id]/stops/route.ts
+  │   │   ├── layout.tsx
+  │   │   └── page.tsx            # Root path, redirects to /destinations
+  │   ├── components/
+  │   │   ├── ui/                 # shadcn/ui components
+  │   │   ├── DestinationCard.tsx
+  │   │   ├── SearchBar.tsx
+  │   │   ├── TripEditor.tsx
+  │   │   └── Navbar.tsx
+  │   ├── db/
+  │   │   ├── index.ts            # Database connection
+  │   │   ├── schema.ts           # Drizzle schema definitions
+  │   │   └── seed.ts             # Seed data
+  │   ├── lib/
+  │   │   ├── auth.ts             # NextAuth configuration
+  │   │   └── utils.ts
+  │   └── types/
+  │       └── index.ts            # Global type definitions
+  ├── drizzle.config.ts
+  ├── package.json
+  └── tsconfig.json
 ```
 
 ---
@@ -121,10 +135,10 @@ trip_stops N──1 destinations
 | best_season | TEXT | | Best travel season |
 | latitude | REAL | | Latitude |
 | longitude | REAL | | Longitude |
-| image | TEXT | NOT NULL | Local image filename (stored in public/images/destinations/) |
+| image | TEXT | NOT NULL | Local image filename (stored in travel-website/public/images/destinations/) |
 | created_at | TEXT | DEFAULT CURRENT_TIMESTAMP | Creation timestamp |
 
-> Images are downloaded from Unsplash/Pexels CDN to the `public/images/destinations/` directory when the seed script runs. The frontend accesses them via `/images/destinations/{filename}`.
+> Images are downloaded from Unsplash/Pexels CDN to the `travel-website/public/images/destinations/` directory when the seed script runs. The frontend accesses them via `/images/destinations/{filename}`.
 
 #### trips — Trip Table
 
@@ -309,11 +323,11 @@ Request:
 
 ## 6. Seed Data — Destination Image Strategy
 
-The seed script `seed.ts` downloads images from Unsplash/Pexels CDN into the `public/images/destinations/` directory and stores the local filenames in the database.
+The seed script `seed.ts` downloads images from Unsplash/Pexels CDN into the `travel-website/public/images/destinations/` directory and stores the local filenames in the database.
 
 **Workflow:**
 1. Define destination data including CDN source URLs.
-2. When the seed script runs, download images one by one to `public/images/destinations/`.
+2. When the seed script runs, download images one by one to `travel-website/public/images/destinations/`.
 3. Store the local filename (not the CDN URL) in the `image` field of the `destinations` table.
 4. The frontend accesses images via Next.js static assets at `/images/destinations/{filename}`.
 

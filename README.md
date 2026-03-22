@@ -1,113 +1,78 @@
-# GitHub Coding Agent
+# GitHub Copilot CLI Agent Workflow
 
-A four-stage AI coding pipeline that uses **GitHub Copilot CLI** to automate software development tasks through GitHub Actions workflows.
+An automated AI coding agent workflow powered by GitHub Copilot CLI and GitHub Actions. Issues go through a four-stage workflow — design, design revision, implementation, and implementation revision — each orchestrated by label-triggered workflows and automatically advanced by a stage-router.
 
-## Architecture
+## Key Benefits
 
-When a GitHub issue receives a stage label, the corresponding workflow triggers and runs the Copilot CLI to produce or revise design documents and code. After each stage completes, a PR is created. When the PR is merged, a stage-router workflow automatically advances the issue to the next stage.
+- Fully automated four-stage workflow: design → design revision → implementation → implementation revision
+- Spec-driven development — Copilot produces a detailed design document for each task before writing any code
+- Every design and implementation goes through a second-pass review and revision
+- Each stage has a customizable agent instruction file (`.agent.md`)
+- Each stage can use a different model, balancing cost and quality
+- Leverages GitHub Copilot CLI to execute each stage
+- Human in the loop — every stage output is reviewed and approved via PR before proceeding
+- Each issue is developed on an isolated feature branch, keeping main stable
+- Open architecture — stages can be added, removed, or reconfigured as needed, and even works with other CLI based agents.
+- GitHub Mobile friendly — just add a label or merge a PR
 
-### Four-Stage Pipeline
+## How It Works
 
-| Stage | Label | Model | Agent | Output |
-|---|---|---|---|---|
-| Design | `ai-design` | gpt-5.4 | ai-design.agent.md | `docs/tasks/<issue-number>/task.md` |
-| Design Revise | `ai-design-revise` | claude-opus-4.6 | ai-design-revise.agent.md | `docs/tasks/<issue-number>/task.md` |
-| Implement | `ai-implement` | claude-opus-4.6 | ai-implement.agent.md | `docs/tasks/<issue-number>/implement.md` |
-| Implement Revise | `ai-implement-revise` | gpt-5.4 | ai-implement-revise.agent.md | `docs/tasks/<issue-number>/implement.md` |
+### Stage Workflow
 
-### Flow
+When an issue is labeled, the corresponding workflow fires and runs Copilot CLI. After Copilot CLI finishes the work, GitHub Actions opens a PR. After the PR is merged, the **stage-router** automatically labels the issue with the next stage.
 
+![Stage Workflow](assets/workflow.png)
+
+| Stage | Label | Model | Description |
+|---|---|---|---|
+| Design | `ai-design` | gpt-5.4 | Analyze issue requirements, produce `docs/tasks/<issue-number>/task.md` |
+| Design Revise | `ai-design-revise` | claude-opus-4.6 | Review and revise `task.md` |
+| Implement | `ai-implement` | claude-opus-4.6 | Implement code per `task.md`, save summary to `implement.md` |
+| Implement Revise | `ai-implement-revise` | gpt-5.4 | Review implementation, make targeted revisions |
+
+### Branch Strategy
+
+Each issue gets a shared base branch plus per-stage branches:
+
+```text
+feature/<N>                  ← base branch (created by design stage)
+  ├─ feature/<N>-design           → PR into feature/<N>
+  ├─ feature/<N>-design-revise    → PR into feature/<N>
+  ├─ feature/<N>-implement        → PR into feature/<N>
+  └─ feature/<N>-implement-revise → PR into feature/<N>
 ```
-Issue created
-  → Add `ai-design` label
-    → Design workflow runs Copilot CLI → creates PR
-      → Merge PR → stage-router adds `ai-design-revise` label
-        → Design Revise workflow → creates PR
-          → Merge PR → stage-router adds `ai-implement` label
-            → Implement workflow → creates PR
-              → Merge PR → stage-router adds `ai-implement-revise` label
-                → Implement Revise workflow → creates PR
-                  → Merge PR → Done
-```
 
-## Project Structure
-
-```
-.github/
-  agents/           # Copilot CLI agent instruction files
-    ai-design.agent.md
-    ai-design-revise.agent.md
-    ai-implement.agent.md
-    ai-implement-revise.agent.md
-  workflows/        # GitHub Actions workflow files
-    ai-design.yml
-    ai-design-revise.yml
-    ai-implement.yml
-    ai-implement-revise.yml
-    stage-router.yml
-scripts/            # Python helper scripts for GitHub API operations
-docs/               # Project documentation
-  requirements.md
-  design.md
-  tasks.md
-  tasks/            # AI-generated output directory (by issue number)
-```
+After all four stages complete, merge `feature/<N>` into `main`.
 
 ## Setup
 
 ### Prerequisites
 
 - A GitHub repository with GitHub Actions enabled
-- A GitHub Personal Access Token (PAT) with:
-  - `repo` scope (full control of private repositories)
-  - Copilot access (for CLI authentication)
+- A GitHub Personal Access Token (PAT) with `repo` scope and Copilot access
 
-### Configuration
+### Required Secret
 
-1. **Add the repository secret:**
-   - Go to Settings → Secrets and variables → Actions
-   - Add a secret named `COPILOT_ACTION_TOKEN` with your PAT
+| Secret | Usage |
+| --- | --- |
+| `COPILOT_ACTION_TOKEN` | Copilot CLI authentication + GitHub API operations |
 
-2. **Create the stage labels** in your repository:
-   - `ai-design`
-   - `ai-design-revise`
-   - `ai-implement`
-   - `ai-implement-revise`
+Add it in **Settings → Secrets and variables → Actions**.
 
-3. **Prepare project documentation:**
-   - Create `docs/requirements.md` with your product requirements
-   - Create `docs/design.md` with your technical design decisions
-   - Create `docs/tasks.md` with your development task checklist
+### Required Labels
 
-### Usage
+Create these labels in your repository:
 
-1. Create a GitHub issue describing the task
-2. Add the `ai-design` label to the issue
-3. The pipeline runs automatically through all four stages
+- `ai-design`
+- `ai-design-revise`
+- `ai-implement`
+- `ai-implement-revise`
 
-## How It Works
+## How to Start
 
-Each stage workflow:
-
-1. Checks out the repository
-2. Sets up Python 3.11 and Node.js 24
-3. Installs the Copilot CLI (`npm install -g @github/copilot`)
-4. Fetches the issue context (title, body, comments)
-5. Runs the Copilot CLI with the stage-specific agent file
-6. Validates that the expected output file was produced
-7. Commits and pushes changes to the `feature/<issue-number>` branch
-8. Creates a PR linking back to the issue
-9. Posts status comments on the issue
-
-The CLI is invoked with:
-```bash
-copilot --agent <agent-file> --prompt <context> --model <model> --allow-all --no-ask-user --silent
-```
-
-The pipeline uses a shared base branch `feature/<issue-number>` plus stage branches derived from it: `feature/<issue-number>-design`, `feature/<issue-number>-design-revise`, `feature/<issue-number>-implement`, and `feature/<issue-number>-implement-revise`.
-
-## Secrets
-
-| Secret | Purpose |
-|---|---|
-| `COPILOT_ACTION_TOKEN` | Copilot CLI authentication + GitHub API operations (PAT with repo + Copilot access) |
+1. The `docs/` folder contains sample docs for a trip planner app. Create your own `requirements.md`, `design.md`, and `tasks.md` for your project.
+2. Create issues based on the tasks in `tasks.md`, one issue per task.
+3. Modify `AGENTS.md` to update the coding guidelines if needed.
+4. Add the `ai-design` label to an issue to kick off the workflow.
+5. Review and merge the PR for each stage — the stage-router advances automatically.
+6. After all four stages complete, merge the `feature/<N>` branch into `main`.

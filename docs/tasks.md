@@ -22,7 +22,7 @@ Description: Complete the login page, registration page, and login state display
 
 ## Task 6: Prepare Destination Seed Data and Image Assets
 
-Description: Organize initial destination data, implement image download and local storage logic, and write the corresponding filenames to the database, ensuring the frontend can reliably display destination images and sample content.
+Description: Organize initial destination data, implement a seed script that downloads destination images from the configured Unsplash/Pexels CDN URLs into `travel-website/public/images/destinations/`, and write the corresponding local filenames to the database. Run the script to download the destination images and save them to the specified local directory, ensuring the destination browsing experience is visually rich and performant with locally served images.
 
 ## Task 7: Implement Destination Query APIs
 
