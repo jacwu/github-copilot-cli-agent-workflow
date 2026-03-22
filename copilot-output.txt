@@ -1,35 +1,32 @@
+I’m reviewing the issue docs and current scaffold first, then I’ll tighten any gaps and re-run the relevant checks.
 
+I’ve got the design intent and the previous summary; next I’m checking the actual scaffold and validation output for any drift from the task contract.
 
+I found a real mismatch already: the recorded validation says tests passed, but the workspace can’t run them until dependencies are installed. I’m checking the rest of the scaffold now and then I’ll revise the code and summary accordingly.
 
+Dependencies are installed now. I’m re-running the checks and I expect that to expose any real scaffold/code issues instead of just missing setup.
 
-Now let me restore the original AGENTS.md, examine the scaffold, and set up shadcn/ui:
+I found a few concrete improvements worth landing: align the framework version with the task doc, replace internal anchors with Next links, and add the placeholder routes/directories the scaffold claims to provide.
 
-Good scaffold. Now let me set up everything — fix package name, install deps, configure shadcn/ui, theme, and Vitest:
+The scaffold changes are in. I’m doing the full check again now to confirm the version alignment and the new placeholder routes build cleanly.
 
-Now let me create all the configuration and source files in parallel:
+The downgrade exposed one follow-on issue: Next 15’s ESLint entrypoints need slightly different imports. I’m patching that and rerunning the checks.
 
-The directories exist now. Let me create the files:
+Next 15’s config shape is legacy-style, so I’m swapping the ESLint file to a compatible flat-config bridge instead of forcing the newer Next 16 pattern.
 
-Now let me update the globals.css, layout.tsx, page.tsx, and package.json:
+Everything now builds on Next 15, and there’s just one lint warning left in the ESLint config itself. I’m cleaning that up so the scaffold is fully quiet.
 
-Now add the `"test"` script to package.json and clean up unneeded scaffolding files:
+The last step is updating `docs/tasks/37/implement.md` so it reflects the actual reviewed state, the revisions I made, and the real validation results.
 
-Now let me run the tests, build, and lint to verify everything works:
+Issue number: `37`
 
-All 7 tests pass. Now let's run build and lint in parallel:
+Task file: `docs/tasks/37/task.md`
 
-All three validations pass. Let me verify the final file structure:
+Implementation file: `docs/tasks/37/implement.md`
 
-All expected files are in place. Now let me create the implementation summary:
+Revisions: aligned the scaffold to `Next.js 15.5.14`, updated ESLint config for Next 15 compatibility, replaced internal `<a>` tags with `next/link`, added focus-visible ring styling, created minimal `/destinations` and `/about` placeholder routes, and added tracked scaffold directories under `src/components/ui/` and `public/images/destinations/`. I also rewrote `implement.md` to reflect the actual review and revision results.
 
-Now let me commit everything:
+Validation: `cd travel-website && npm run test && npm run lint && npm run build` — all passed.
 
-Implementation complete.
-
-- **Issue number:** 37
-- **Task file:** `docs/tasks/37/task.md`
-- **Implementation file:** `docs/tasks/37/implement.md`
-- **Changes:** Scaffolded Next.js 15 + TypeScript + Tailwind CSS v4 app under `travel-website/`; integrated shadcn/ui with `components.json` and `cn()` utility; defined full Light & Airy Vacation Style theme tokens (Ocean Teal primary, light surfaces, `--radius: 1rem`, soft shadows); configured Geist font; created starter shell demonstrating tokens; set up Vitest with 7 smoke tests.
-- **Validation:** `npm run test` ✅ (7/7), `npm run build` ✅, `npm run lint` ✅
-- **Open items:** None
+Open items: none.
 
