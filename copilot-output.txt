@@ -1,12 +1,26 @@
-I’ve got the repo-level requirements and architecture; next I’m checking for existing task-doc patterns so the issue design matches the project’s conventions before I write `docs/tasks/37/task.md`.
 
-I found there aren’t any prior issue task docs yet, so I’m basing this one directly on the product docs and the current repository layout. I’m doing one last read-only pass over `travel-website/` to ground the “Current State” section, then I’ll save the task doc.
 
-I’ve confirmed the app scaffold is effectively uninitialized, so the design can explicitly cover first-time setup and the global styling contract future tasks will build on. I’m saving the issue design doc now.
 
-Issue number: `37`
 
-Saved file: `docs/tasks/37/task.md`
+Now let me check the current codebase state to understand what exists in `travel-website/`.
 
-Summary: I created the issue-level technical design for initializing the `travel-website/` Next.js scaffold and establishing the global Light & Airy Vacation Style system, including Tailwind, shadcn/ui readiness, Ocean Teal primary theming, large radii, and soft-elevation styling conventions.
+Let me also check the existing AGENTS.md for any project conventions:
+
+Now I have a thorough understanding of the design docs, current codebase, and the existing task.md. Let me write the revised document.
+
+Let me verify the saved file is correct:
+
+- **Issue number:** 37
+- **Saved file:** `docs/tasks/37/task.md`
+- **Revisions:**
+  1. **Added Vitest testing infrastructure** (new Section 7) — `docs/design.md` Section 8 mandates Vitest, so the scaffold must include it for TDD from Task 2 onward
+  2. **Added concrete Ocean Teal color values** — reference HSL/hex (`hsl(174, 62%, 47%)` / `#2DB5A0`) with WCAG AA contrast guidance
+  3. **Added sandy beige acknowledgment** — aligned surface strategy with `docs/design.md`'s "Sandy beige and light gray-white" palette
+  4. **Added full shadcn/ui CSS variable token table** — 16 semantic tokens with purpose and value direction for implementer clarity
+  5. **Specified `@/` path alias** — explicit `src/` mapping in both `tsconfig.json` and `vitest.config.ts`
+  6. **Specified `cn()` utility stack** — `clsx` + `tailwind-merge` as dependencies
+  7. **Added Geist font section** (new Section 5) — per `docs/design.md`'s "Inter/Geist" recommendation
+  8. **Added glassmorphism preparation note** — ensures backdrop-blur utilities remain available for later tasks
+  9. **Expanded expected file table** — now includes `vitest.config.ts`, `utils.test.ts`, `components.json`, and ESLint config
+  10. **Refined implementation plan** — 7 steps (was 6), each with bold action verb and specific deliverables
 
