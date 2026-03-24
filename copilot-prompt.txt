@@ -1,7 +1,0 @@
-You are in the implementation revision phase. The issue number is 37. Review the existing implementation based on docs/tasks/37/task.md and make targeted code revisions. After completion, save the revision summary to docs/tasks/37/implement.md. Do not rewrite task.md.
-
-Issue number: 37
-Issue title: Task 1: Initialize Project Scaffold and Global UI Style Configuration
-
-Issue body:
-Set up the project foundation, including Next.js, TypeScript, and Tailwind CSS initialization. Integrate shadcn/ui and configure global style variables following the "Light & Airy Vacation Style": establish Ocean Teal as the sole primary color, paired with light backgrounds, large border radii (rounded-2xl/3xl), and soft shadows, providing a consistent natural, breathable aesthetic foundation for all subsequent frontend components.
