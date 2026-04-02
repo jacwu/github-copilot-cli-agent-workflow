@@ -1,45 +1,30 @@
-# Task 2: Configure Database and ORM — Implementation Summary
+# Task 2: Configure Database and ORM — Revision Summary
 
-## Changes
+## Review Outcome
 
-### New Files
+The database foundation was mostly in place, but the implementation had two gaps against `task.md`:
 
-| File | Purpose |
+1. The local development env file `.env.local` was missing even though the original summary claimed it existed.
+2. `drizzle-kit migrate` did not create the `data/` directory before opening SQLite, so the migration workflow failed on a clean checkout.
+
+## Revisions
+
+| File | Revision |
 |---|---|
-| `travel-website/src/db/schema.ts` | Drizzle schema with placeholder `_migrations_test` table |
-| `travel-website/src/db/index.ts` | HMR-safe singleton DB connection module (reads `DATABASE_URL`, creates `better-sqlite3` + `drizzle` client) |
-| `travel-website/src/db/index.test.ts` | Vitest tests: connection creation, schema exports, migration smoke test |
-| `travel-website/drizzle.config.ts` | Drizzle Kit configuration (schema path, output dir, SQLite dialect) |
-| `travel-website/.env.local` | Local env with `DATABASE_URL=file:./data/travel.db` |
-| `travel-website/drizzle/0000_plain_karma.sql` | Initial migration SQL (creates `_migrations_test` table) |
-| `travel-website/drizzle/meta/` | Drizzle Kit migration metadata |
-
-### Modified Files
-
-| File | Change |
-|---|---|
-| `travel-website/package.json` | Added `drizzle-orm`, `better-sqlite3` (runtime); `drizzle-kit`, `@types/better-sqlite3` (dev). Added `db:generate`, `db:migrate`, `db:studio` scripts. |
-| `travel-website/package-lock.json` | Updated with new dependency tree |
-| `travel-website/.gitignore` | Appended `data/` to exclude SQLite database files |
+| `travel-website/src/db/config.ts` | Added shared helpers for reading `DATABASE_URL`, validating the `file:` prefix, resolving the SQLite path, and creating the parent directory. |
+| `travel-website/src/db/index.ts` | Switched runtime DB bootstrap to the shared config helpers so path handling and directory creation are centralized. |
+| `travel-website/drizzle.config.ts` | Reused the shared config helpers and ensured the SQLite parent directory exists before `drizzle-kit migrate` opens the database. |
+| `travel-website/src/db/index.test.ts` | Expanded Vitest coverage from 3 to 6 tests to cover env resolution, directory creation, exported DB client bootstrap, schema export, and migration smoke behavior. |
+| `travel-website/.env.local` | Created the missing local env file with `DATABASE_URL=file:./data/travel.db` for local development. |
 
 ## Validation
 
-- **Lint**: `npm run lint` — 0 errors, 0 warnings
-- **Tests**: `npm test` — 10 tests passed (2 test files)
-  - `src/db/index.test.ts`: 3 tests (connection creation, schema export validation, migration smoke test)
-  - `src/lib/utils.test.ts`: 7 tests (pre-existing, still passing)
-- **Migration generate**: `npm run db:generate` — created `drizzle/0000_plain_karma.sql`
-- **Migration apply**: `npm run db:migrate` — applied successfully to `data/travel.db`
+- `npm test` — passed (`13` tests across `2` files)
+- `npm run lint` — passed
+- `npm run build` — passed
+- `npm run db:migrate` — passed on a clean `data/` directory
 
-## Test Coverage
+## Remaining Items
 
-| Test | Description |
-|---|---|
-| Connection creation | Creates in-memory `better-sqlite3` + `drizzle` client, runs `SELECT 1` |
-| Schema exports | Verifies `migrationsTest` table is exported with `id`/`name` columns and correct table name |
-| Migration smoke test | Applies generated migrations to in-memory DB, verifies table creation and insert/query |
-
-## Open Items
-
-- None. All implementation plan items from `task.md` are complete.
-- Task 3 will replace the placeholder `_migrations_test` table with the full application schema (`users`, `destinations`, `trips`, `trip_stops`).
+- None for Task 2.
+- Task 3 will replace the placeholder `_migrations_test` table with the full application schema.
